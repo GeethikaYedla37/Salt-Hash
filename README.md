@@ -1,4 +1,4 @@
-# macOS Password Manager
+# Salt-Hash
 
 A secure password manager application with a Python backend and a simple HTML/JS frontend. This project demonstrates password storage, authentication, and basic user management features.
 

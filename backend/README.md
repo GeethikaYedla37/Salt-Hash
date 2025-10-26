@@ -1,4 +1,4 @@
-# macOS-Style Password Manager
+# Salt-Hash
 
 A secure password storage and authentication system with a beautiful macOS-inspired interface featuring glassmorphism design.
 

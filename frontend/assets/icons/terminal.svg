@@ -1,0 +1,13 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Terminal Icon</title>
+  <desc id="desc">Dark rounded square with code prompt symbol.</desc>
+  <defs>
+    <radialGradient id="terminalBg" cx="30%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#14182a" />
+      <stop offset="100%" stop-color="#04060c" />
+    </radialGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="url(#terminalBg)" />
+  <path d="M19 24l10 8-10 8" stroke="#7dfd9e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M31 42h14" stroke="#7dfd9e" stroke-width="4" stroke-linecap="round" />
+</svg>

@@ -1,0 +1,18 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Wallpaper Settings Icon</title>
+  <desc id="desc">Landscape scene with mountains and sun on purple gradient square.</desc>
+  <defs>
+    <linearGradient id="wallpaperBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9260ff" />
+      <stop offset="100%" stop-color="#c456ff" />
+    </linearGradient>
+    <linearGradient id="mountainFade" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.65" />
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="url(#wallpaperBg)" />
+  <circle cx="45" cy="20" r="6" fill="#fffb82" />
+  <path d="M14 44l12-16 9 12 8-10 13 14H14z" fill="url(#mountainFade)" />
+  <path d="M14 36l8-10 6 8 6-7 10 11" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.5" />
+</svg>

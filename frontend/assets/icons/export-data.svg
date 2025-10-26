@@ -1,0 +1,15 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Export Data Icon</title>
+  <desc id="desc">Open drawer with upward arrow on an orange gradient square.</desc>
+  <defs>
+    <linearGradient id="exportBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff8154" />
+      <stop offset="100%" stop-color="#ffb152" />
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="url(#exportBg)" />
+  <path d="M20 20h24v16H20z" fill="#ffffff" opacity="0.9" />
+  <path d="M20 32h24v10c0 2.2-1.8 4-4 4H24c-2.2 0-4-1.8-4-4V32z" fill="#ffffff" />
+  <path d="M32 26v-8" stroke="#ff5a3a" stroke-width="4" stroke-linecap="round" />
+  <path d="M26 22l6-6 6 6" stroke="#ff5a3a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+</svg>

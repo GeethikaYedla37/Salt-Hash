@@ -1,0 +1,13 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Advanced Settings Icon</title>
+  <desc id="desc">Gear over gradient teal square.</desc>
+  <defs>
+    <linearGradient id="settingsBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00b1a3" />
+      <stop offset="100%" stop-color="#0080c6" />
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="url(#settingsBg)" />
+  <path d="M32 22a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 14a4 4 0 1 1 0-8 4 4 0 0 1 0 8z" fill="#ffffff" opacity="0.95" />
+  <path d="M32 15v6M32 43v6M19 32h-6M51 32h-6M25.5 20.5l-4.2-4.2M42.7 37.7l-4.2-4.2M25.5 43.5l-4.2 4.2M42.7 26.3l-4.2 4.2" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.8" />
+</svg>

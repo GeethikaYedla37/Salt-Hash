@@ -10,51 +10,12 @@ class PasswordManager {
             sessionTimeout: 30,
             trackHistory: true
         };
+        this.apiBaseUrl = 'http://127.0.0.1:5000';
         
         // Demo data - stored in memory
-        this.users = [
-            {
-                username: "alice",
-                salt: "$2b$12$XrE8KvXZJYvA2",
-                hashedPassword: "$2b$12$XrE8KvXZJYvA2hdt3F9aBe5k4J8Nm0qW",
-                registeredAt: "2025-10-20T14:30:00Z"
-            },
-            {
-                username: "bob",
-                salt: "$2b$12$YtF9LwYaKZwB3",
-                hashedPassword: "$2b$12$YtF9LwYaKZwB3ieu4G0bCf6l5K9On1rX",
-                registeredAt: "2025-10-21T09:15:00Z"
-            },
-            {
-                username: "charlie",
-                salt: "$2b$12$ZuG0MxZbLAwC4",
-                hashedPassword: "$2b$12$ZuG0MxZbLAwC4jfv5H1cDg7m6L0Po2sY",
-                registeredAt: "2025-10-22T16:45:00Z"
-            }
-        ];
+        this.users = [];
         
-        this.loginHistory = [
-            {
-                username: "alice",
-                action: "login",
-                timestamp: "2025-10-22T10:00:00Z"
-            },
-            {
-                username: "bob",
-                action: "login",
-                timestamp: "2025-10-22T10:30:00Z"
-            },
-            {
-                username: "alice",
-                action: "logout",
-                timestamp: "2025-10-22T11:00:00Z"
-            },
-            {
-                username: "charlie",
-                action: "register",
-                timestamp: "2025-10-22T16:45:00Z"
-            }
-        ];
+        this.loginHistory = [];
         
         this.wallpapers = this.loadDefaultWallpapers();
         
@@ -121,31 +82,28 @@ class PasswordManager {
         this.updateLoginDisplayName(username);
         this.updateStatus('Verifying credentials…');
         
-        const user = this.users.find(u => u.username === username);
-        
-        if (!user) {
-            this.showMessage(messageEl, 'User not found', 'error');
-            this.updateStatus('User not found');
-            return;
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                this.currentUser = data.username;
+                this.showMessage(messageEl, 'Login successful!', 'success');
+                this.updateStatus(`Welcome, ${this.currentUser}`);
+                setTimeout(() => this.showDesktop(), 1000);
+            } else {
+                this.showMessage(messageEl, data.error, 'error');
+                this.updateStatus(data.error);
+            }
+        } catch (error) {
+            this.showMessage(messageEl, 'Failed to connect to server', 'error');
+            this.updateStatus('Connection error');
         }
-        
-        // Mock password verification (in reality, would use bcrypt.compare)
-        const mockHash = this.mockHashPassword(password, user.salt);
-        if (mockHash !== user.hashedPassword) {
-            this.showMessage(messageEl, 'Invalid password', 'error');
-            this.updateStatus('Invalid password');
-            return;
-        }
-        
-        this.currentUser = user.username;
-        this.addToHistory(username, 'login');
-        
-        this.showMessage(messageEl, 'Login successful!', 'success');
-        this.updateStatus(`Welcome, ${this.currentUser}`);
-        
-        setTimeout(() => {
-            this.showDesktop();
-        }, 1000);
     }
     
     async handleRegister() {
@@ -163,29 +121,26 @@ class PasswordManager {
             return;
         }
         
-        if (this.users.find(u => u.username === username)) {
-            this.showMessage(messageEl, 'Username already exists', 'error');
-            return;
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                this.showMessage(messageEl, 'Registration successful! Please login.', 'success');
+                document.getElementById('username').value = '';
+                document.getElementById('password').value = '';
+                this.updateLoginDisplayName('');
+            } else {
+                this.showMessage(messageEl, data.error, 'error');
+            }
+        } catch (error) {
+            this.showMessage(messageEl, 'Failed to connect to server', 'error');
         }
-        
-        const salt = this.generateSalt();
-        const hashedPassword = this.mockHashPassword(password, salt);
-        
-        const newUser = {
-            username,
-            salt,
-            hashedPassword,
-            registeredAt: new Date().toISOString()
-        };
-        
-        this.users.push(newUser);
-        this.addToHistory(username, 'register');
-        
-        this.showMessage(messageEl, 'Registration successful! Please login.', 'success');
-        
-        document.getElementById('username').value = '';
-        document.getElementById('password').value = '';
-        this.updateLoginDisplayName('');
     }
     
     handleLogout() {
@@ -739,43 +694,66 @@ class PasswordManager {
         this.populateUsersTable(usersTableBody);
     }
     
-    populateUsersTable(tbody) {
-        tbody.innerHTML = '';
+    async populateUsersTable(tbody) {
+        tbody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
         
-        this.users.forEach(user => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${user.username}</td>
-                <td>${new Date(user.registeredAt).toLocaleString()}</td>
-                <td>${user.hashedPassword.substring(0, 20)}...</td>
-                <td>
-                    <button class="btn btn-danger btn-sm" onclick="passwordManager.deleteUser('${user.username}')">Delete</button>
-                </td>
-            `;
-            tbody.appendChild(row);
-        });
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/users`);
+            const data = await response.json();
+
+            if (response.ok) {
+                this.users = data.users;
+                tbody.innerHTML = '';
+                this.users.forEach(user => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${user.username}</td>
+                        <td>${new Date(user.registered_at).toLocaleString()}</td>
+                        <td>${user.hashed_password.substring(0, 20)}...</td>
+                        <td>
+                            <button class="btn btn-danger btn-sm" onclick="passwordManager.deleteUser('${user.username}')">Delete</button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="4">Failed to load users</td></tr>';
+            }
+        } catch (error) {
+            tbody.innerHTML = '<tr><td colspan="4">Connection error</td></tr>';
+        }
     }
     
-    deleteUser(username) {
+    async deleteUser(username) {
         if (username === this.currentUser) {
             alert('Cannot delete currently logged in user');
             return;
         }
         
         if (confirm(`Are you sure you want to delete user "${username}"?`)) {
-            this.users = this.users.filter(u => u.username !== username);
-            
-            // Update all user manager windows
-            this.windows.forEach((windowEl, appName) => {
-                if (appName === 'user-manager') {
-                    const tbody = windowEl.querySelector('#users-table-body');
-                    this.populateUsersTable(tbody);
+            try {
+                const response = await fetch(`${this.apiBaseUrl}/users/${username}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    // Update all user manager windows
+                    this.windows.forEach((windowEl, appName) => {
+                        if (appName === 'user-manager') {
+                            const tbody = windowEl.querySelector('#users-table-body');
+                            this.populateUsersTable(tbody);
+                        }
+                    });
+                } else {
+                    alert('Failed to delete user');
                 }
-            });
+            } catch (error) {
+                alert('Failed to connect to server');
+            }
         }
     }
     
-    handleAddUser() {
+    async handleAddUser() {
         const username = document.getElementById('new-username').value;
         const password = document.getElementById('new-password').value;
         
@@ -789,36 +767,33 @@ class PasswordManager {
             return;
         }
         
-        if (this.users.find(u => u.username === username)) {
-            alert('Username already exists');
-            return;
-        }
-        
-        const salt = this.generateSalt();
-        const hashedPassword = this.mockHashPassword(password, salt);
-        
-        const newUser = {
-            username,
-            salt,
-            hashedPassword,
-            registeredAt: new Date().toISOString()
-        };
-        
-        this.users.push(newUser);
-        this.addToHistory(username, 'register');
-        
-        // Update all user manager windows
-        this.windows.forEach((windowEl, appName) => {
-            if (appName === 'user-manager') {
-                const tbody = windowEl.querySelector('#users-table-body');
-                this.populateUsersTable(tbody);
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            if (response.ok) {
+                // Update all user manager windows
+                this.windows.forEach((windowEl, appName) => {
+                    if (appName === 'user-manager') {
+                        const tbody = windowEl.querySelector('#users-table-body');
+                        this.populateUsersTable(tbody);
+                    }
+                });
+
+                // Clear form and hide modal
+                document.getElementById('new-username').value = '';
+                document.getElementById('new-password').value = '';
+                this.hideModal(document.getElementById('add-user-modal'));
+            } else {
+                const data = await response.json();
+                alert(`Failed to add user: ${data.error}`);
             }
-        });
-        
-        // Clear form and hide modal
-        document.getElementById('new-username').value = '';
-        document.getElementById('new-password').value = '';
-        this.hideModal(document.getElementById('add-user-modal'));
+        } catch (error) {
+            alert('Failed to connect to server');
+        }
     }
     
     initTerminal(contentEl) {
@@ -967,15 +942,6 @@ class PasswordManager {
         const historyTableBody = contentEl.querySelector('#history-table-body');
         const historyFilter = contentEl.querySelector('#history-filter');
         
-        // Populate filter dropdown
-        const users = [...new Set(this.loginHistory.map(h => h.username))];
-        users.forEach(user => {
-            const option = document.createElement('option');
-            option.value = user;
-            option.textContent = user;
-            historyFilter.appendChild(option);
-        });
-        
         historyFilter.addEventListener('change', () => {
             this.populateHistoryTable(historyTableBody, historyFilter.value);
         });
@@ -983,26 +949,53 @@ class PasswordManager {
         this.populateHistoryTable(historyTableBody, 'all');
     }
     
-    populateHistoryTable(tbody, filterUser) {
-        tbody.innerHTML = '';
+    async populateHistoryTable(tbody, filterUser) {
+        tbody.innerHTML = '<tr><td colspan="3">Loading...</td></tr>';
         
-        let filteredHistory = this.loginHistory;
-        if (filterUser !== 'all') {
-            filteredHistory = this.loginHistory.filter(h => h.username === filterUser);
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/history`);
+            const data = await response.json();
+
+            if (response.ok) {
+                this.loginHistory = data.history;
+
+                // Populate filter dropdown
+                const windowEl = tbody.closest('.window');
+                const historyFilter = windowEl.querySelector('#history-filter');
+                const users = [...new Set(this.loginHistory.map(h => h.username))];
+                // remove all options except the first one
+                while (historyFilter.options.length > 1) {
+                    historyFilter.remove(1);
+                }
+                users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user;
+                    option.textContent = user;
+                    historyFilter.appendChild(option);
+                });
+
+
+                let filteredHistory = this.loginHistory;
+                if (filterUser !== 'all') {
+                    filteredHistory = this.loginHistory.filter(h => h.username === filterUser);
+                }
+
+                tbody.innerHTML = '';
+                filteredHistory.forEach(entry => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${new Date(entry.timestamp).toLocaleString()}</td>
+                        <td>${entry.username}</td>
+                        <td><span class="status status--${this.getActionStatus(entry.action)}">${entry.action}</span></td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="3">Failed to load history</td></tr>';
+            }
+        } catch (error) {
+            tbody.innerHTML = '<tr><td colspan="3">Connection error</td></tr>';
         }
-        
-        // Sort by timestamp descending
-        filteredHistory.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-        
-        filteredHistory.forEach(entry => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${new Date(entry.timestamp).toLocaleString()}</td>
-                <td>${entry.username}</td>
-                <td><span class="status status--${this.getActionStatus(entry.action)}">${entry.action}</span></td>
-            `;
-            tbody.appendChild(row);
-        });
     }
     
     getActionStatus(action) {
@@ -1120,16 +1113,26 @@ class PasswordManager {
         const exportFullBtn = contentEl.querySelector('#export-full-json');
         const exportStatus = contentEl.querySelector('#export-status');
         
-        exportUsersBtn.addEventListener('click', () => {
-            const csv = this.generateUsersCSV();
-            this.downloadFile('users.csv', csv);
-            this.showExportStatus(exportStatus, 'Users exported successfully!', 'success');
+        exportUsersBtn.addEventListener('click', async () => {
+            try {
+                const response = await fetch(`${this.apiBaseUrl}/export/users`);
+                const csv = await response.text();
+                this.downloadFile('users.csv', csv);
+                this.showExportStatus(exportStatus, 'Users exported successfully!', 'success');
+            } catch (error) {
+                this.showExportStatus(exportStatus, 'Failed to export users', 'error');
+            }
         });
-        
-        exportHistoryBtn.addEventListener('click', () => {
-            const csv = this.generateHistoryCSV();
-            this.downloadFile('history.csv', csv);
-            this.showExportStatus(exportStatus, 'History exported successfully!', 'success');
+
+        exportHistoryBtn.addEventListener('click', async () => {
+            try {
+                const response = await fetch(`${this.apiBaseUrl}/export/history`);
+                const csv = await response.text();
+                this.downloadFile('history.csv', csv);
+                this.showExportStatus(exportStatus, 'History exported successfully!', 'success');
+            } catch (error) {
+                this.showExportStatus(exportStatus, 'Failed to export history', 'error');
+            }
         });
         
         exportFullBtn.addEventListener('click', () => {
@@ -1597,13 +1600,7 @@ class PasswordManager {
     }
     
     addToHistory(username, action) {
-        if (!this.settings.trackHistory) return;
-        
-        this.loginHistory.push({
-            username,
-            action,
-            timestamp: new Date().toISOString()
-        });
+        // No-op, handled by backend
     }
 
     updateStatus(message) {
@@ -1628,29 +1625,6 @@ class PasswordManager {
         }
     }
     
-    generateSalt() {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789./';
-        let salt = '$2b$12$';
-        for (let i = 0; i < 22; i++) {
-            salt += chars[Math.floor(Math.random() * chars.length)];
-        }
-        return salt;
-    }
-    
-    mockHashPassword(password, salt) {
-        // Mock bcrypt hashing - in reality would use bcrypt.hash()
-        return salt + this.simpleHash(password + salt);
-    }
-    
-    simpleHash(str) {
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) {
-            const char = str.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash; // Convert to 32-bit integer
-        }
-        return Math.abs(hash).toString(36);
-    }
 }
 
 // Initialize the application
